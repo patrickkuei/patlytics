@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <div className="h-screen overflow-hidden bg-primary flex justify-center">
       <div className="w-full max-w-3xl p-4 flex flex-col gap-4">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={handleSearch} isLoading={loading} />
         {loading ? <Loader /> : <Results results={results} />}
       </div>
     </div>
