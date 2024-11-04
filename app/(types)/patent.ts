@@ -6,6 +6,12 @@ export type InfringePatentProduct = {
   claimsAtIssue: string[];
 };
 
+export type PatentCheckResult = {
+  patentId: string;
+  companyName: string;
+  products: InfringePatentProduct[];
+}
+
 const ProductSchema = z.object({
   productName: z
     .string()

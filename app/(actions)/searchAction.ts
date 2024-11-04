@@ -9,7 +9,7 @@ import {
 } from "./nodeCacheAction";
 import { getPatentResult } from "./openAiAction";
 
-import type { PatentResponseType } from "../(types)/patent";
+import type { PatentCheckResult, PatentResponseType } from "../(types)/patent";
 
 const mockCompanies = MockCompanyAndProducts.companies.map((c) => c.name);
 const mockPatentIds = MockPatents.map((p) => p.publication_number);
@@ -102,18 +102,26 @@ const _getDetailClaims = (
 };
 
 const _getResViewModel = (
+  patentId: string,
+  companyName: string,
   res: PatentResponseType,
   claims: {
     text: string;
     num: string;
   }[]
-) => {
+): PatentCheckResult => {
   const { topInfringingProducts } = res;
-  const resViewModel = topInfringingProducts.map((res) => ({
+  const productsViewModel = topInfringingProducts.map((res) => ({
     name: res.productName,
     reason: res.infringementExplanation,
     claimsAtIssue: _getDetailClaims(claims, res.claimsAtIssue),
   }));
+
+  const resViewModel = {
+    patentId,
+    companyName,
+    products: productsViewModel,
+  };
 
   return resViewModel;
 };
@@ -138,7 +146,7 @@ export const getResult = async (
   const cachedResult = await getCachedPatentResult(patentId, companyName);
 
   if (cachedResult) {
-    return _getResViewModel(cachedResult, claims);
+    return _getResViewModel(patentId, companyName, cachedResult, claims);
   }
 
   try {
@@ -155,7 +163,12 @@ export const getResult = async (
       if (res) {
         setCachedPatentResult(patentId, companyName, res);
 
-        const resViewModel = _getResViewModel(res, claims);
+        const resViewModel = _getResViewModel(
+          patentId,
+          companyName,
+          res,
+          claims
+        );
 
         return resViewModel;
       } else {

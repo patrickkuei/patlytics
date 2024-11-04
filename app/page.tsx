@@ -6,11 +6,11 @@ import Loader from "./(components)/Loader";
 import Results from "./(components)/Results";
 import SearchBar from "./(components)/SearchBar";
 
-import type { InfringePatentProduct } from "./(types)/patent";
+import type { PatentCheckResult } from "./(types)/patent";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<InfringePatentProduct[]>([]);
+  const [results, setResults] = useState<PatentCheckResult>();
 
   const handleSearch = async (patentId: string, companyName: string) => {
     setLoading(true);
@@ -21,7 +21,9 @@ export default function Home() {
         setResults(result);
       }
     } catch (error) {
-      setResults([]);
+      setResults(undefined);
+
+      console.error(error);
     } finally {
       setLoading(false);
     }
