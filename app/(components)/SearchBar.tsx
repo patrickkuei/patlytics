@@ -29,9 +29,7 @@ const SearchBar = ({ onSearch, isLoading }: SearchBarProps) => {
 
   return (
     <div className="bg-primary p-4 rounded-md shadow-md">
-      <h2 className="text-lg font-semibold text-text mb-2">
-        Patent Infringement Check
-      </h2>
+      <h2 className="text-lg text-text mb-2">Patent Infringement Check</h2>
       <input
         type="text"
         placeholder="Patent ID"
@@ -53,7 +51,7 @@ const SearchBar = ({ onSearch, isLoading }: SearchBarProps) => {
           isButtonDisabled
             ? "bg-gray-700 text-gray-500 cursor-not-allowed"
             : "bg-accent text-text hover:bg-gray-600"
-        } font-semibold p-2 rounded w-full transition`}
+        } p-2 rounded w-full transition`}
         disabled={isButtonDisabled}
       >
         Check

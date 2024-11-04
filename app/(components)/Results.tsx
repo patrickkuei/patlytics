@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { PatentCheckResult } from "../(types)/patent";
 
 interface ResultsProps {
@@ -7,11 +10,74 @@ interface ResultsProps {
 const Results = ({ results }: ResultsProps) => {
   const { products = [], companyName, patentId } = results || {};
 
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    () => {
+      const savedResults: PatentCheckResult[] = JSON.parse(
+        localStorage.getItem("savedResults") || "[]"
+      );
+
+      if (
+        savedResults.some(
+          (result) =>
+            result.companyName === companyName && result.patentId === patentId
+        )
+      ) {
+        return "saved";
+      }
+      return "idle";
+    }
+  );
+
+  const handleSaveClick = async () => {
+    if (!results) {
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    await new Promise<void>((resolve) =>
+      setTimeout(() => {
+        const savedResults: PatentCheckResult[] = JSON.parse(
+          localStorage.getItem("savedResults") || "[]"
+        );
+
+        savedResults.unshift(results);
+        localStorage.setItem("savedResults", JSON.stringify(savedResults));
+        resolve();
+      }, 1000)
+    );
+
+    setSaveStatus("saved");
+  };
+
   return (
     <div className="bg-primary px-5 mb-6 rounded-md shadow-md min-h-80 overflow-y-auto">
-      <h2 className="text-lg font-semibold text-text mb-2">
+      <h2 className="text-lg text-text mb-2">
         Check Results{" "}
-        {companyName && patentId ? `${companyName} - ${patentId}` : ""}
+        {companyName && patentId ? (
+          <>
+            {`${companyName} - ${patentId}`}
+            <button
+              className={`rounded px-2 ml-4 transition text-text ${
+                saveStatus === "saving"
+                  ? "bg-slate-700 cursor-wait"
+                  : saveStatus === "saved"
+                  ? "bg-slate-800"
+                  : "bg-red-900 hover:bg-red-500"
+              }`}
+              onClick={handleSaveClick}
+              disabled={saveStatus === "saving" || saveStatus === "saved"} // 儲存進行中和已完成後禁用按鈕
+            >
+              {saveStatus === "saving"
+                ? "Saving..."
+                : saveStatus === "saved"
+                ? "Saved"
+                : "Save"}
+            </button>
+          </>
+        ) : (
+          ""
+        )}
       </h2>
       {products.length === 0 ? (
         <p className="text-text">No potentially infringing products found.</p>
