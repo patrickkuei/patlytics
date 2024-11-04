@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Patent Infringement Checker
 
-## Getting Started
+[Live Demo](https://patlytics.vercel.app/)
 
-First, run the development server:
+This Patent Checker app leverages `large language model (LLM)` AI technology to determine if a specific company and its products may infringe on a given patent. By incorporating `fuzzy search`, it helps users identify relevant results even when search keywords contain minor errors or variations. The app also offers `localStorage` for client-side data saving, allowing users to retain their search results without re-querying. Additionally, `node-cache` is used server-side to store frequently accessed data, significantly reducing LLM processing costs and improving response times.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Key Features
+- Patent Infringement Analysis: The application checks products against specific patents, listing claims that might be at issue.
+- Fuzzy Search: Utilizes fuzzy search to match product names closely related to patent claims.
+- Report Saving & Retrieval: Users can save analysis results for later review, with saved data stored in localStorage.
+
+### Technologies Used
+- Next.js: Provides a streamlined developer experience with Server Actions for efficient server communication.
+- TypeScript: Ensures type safety and easier debugging.
+- ESLint: A linter tool used to enforce coding standards and catch potential errors.
+- Prettier: A code formatter that ensures consistent styling across the codebase.
+- Tailwind CSS: Enables a modern, dark-themed, responsive design with custom hover and transition effects.
+- OpenAI API: Utilizes large language models (LLMs) to analyze potential patent infringement.
+- LangChain: Streamlines interactions with the OpenAI API, enabling structured output and enhancing the patent-checking process.
+- node-cache: Implements caching for fast access to frequently accessed patent data.
+- Local Storage: Saves user data for report management and persistence.
+- Docker: Simplifies deployment, allowing the app to run consistently across different environments.
+
+### Getting Started
+#### Clone the Repository:
+```
+git clone https://github.com/patrickkuei/patlytics.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Install Dependencies:
+```
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### Run the Application:
+```
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### Run in Docker:
 
-## Learn More
+Install Docker on your machine.
 
-To learn more about Next.js, take a look at the following resources:
+Build your container: 
+```
+docker build -t patlytics-docker .
+```
+Run your container:
+```
+docker run -p 3000:3000 patlytics-docker
+```
+Make sure you have the environment variable `API_KEY` set for the OpenAI API. You can set it in a .env file in your project root, like this:
+```
+API_KEY=your_actual_api_key
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Usage
+#### Check for Patent Infringement:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Enter a product name and patent ID to check for potential infringement.
 
-## Deploy on Vercel
+#### Save and View Reports:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Save the analysis result and view saved reports in the Saved Results section.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+#### Cached Data Management:
+
+Cached patent information enables faster load times for previously accessed data.
