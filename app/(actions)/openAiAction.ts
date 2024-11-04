@@ -2,7 +2,9 @@
 
 import { PromptTemplate } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
-import { z } from "zod";
+import { ResponseSchema } from "../(types)/patent";
+
+import type { PatentResponseType } from "../(types)/patent";
 
 const model = new ChatOpenAI({
   model: "gpt-4o-mini",
@@ -30,41 +32,16 @@ export const getPatentResult = async (
   productsPrompt: string,
   claimPrompt: string
 ) => {
-  const ProductSchema = z.object({
-    productName: z
-      .string()
-      .describe(
-        "The name of the product that potentially infringes on the patent."
-      ),
-    infringementExplanation: z
-      .string()
-      .describe(
-        "A detailed explanation of why this product may infringe on the patent, outlining specific similarities or overlaps."
-      ),
-    claimsAtIssue: z
-      .array(z.string())
-      .describe(
-        "A list of specific patent claims number that the product potentially infringes upon."
-      ),
-  });
-
-  const ResponseSchema = z.object({
-    topInfringingProducts: z
-      .array(ProductSchema)
-      .max(2)
-      .describe(
-        "A list of products that most likely infringe on the patent, including explanations."
-      ),
-  });
-
   const structuredLlm = model.withStructuredOutput(ResponseSchema);
 
   try {
     const prompt = await _getPatentPrompt(productsPrompt, claimPrompt);
-    const res = await structuredLlm.invoke(prompt);
+    const res: PatentResponseType = await structuredLlm.invoke(prompt);
 
     return res;
   } catch (error) {
-    console.error(error);
+    console.error("LLM Error: ", error);
+
+    throw error;
   }
 };

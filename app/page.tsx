@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { getResult } from "./(actions)/searchAction";
 import Loader from "./(components)/Loader";
 import Results from "./(components)/Results";
 import SearchBar from "./(components)/SearchBar";
 
 import type { InfringePatentProduct } from "./(types)/patent";
-import { getResult } from "./(actions)/searchAction";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -17,11 +17,11 @@ export default function Home() {
 
     try {
       const result = await getResult(patentId, companyName);
-      if(result) {
-        setResults(result)
+      if (result) {
+        setResults(result);
       }
     } catch (error) {
-      console.error(error)
+      setResults([]);
     } finally {
       setLoading(false);
     }

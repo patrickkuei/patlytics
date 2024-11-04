@@ -3,7 +3,13 @@
 import Fuse from "fuse.js";
 import MockCompanyAndProducts from "../(mocks)/company_products.json";
 import MockPatents from "../(mocks)/patents.json";
+import {
+  getCachedPatentResult,
+  setCachedPatentResult,
+} from "./nodeCacheAction";
 import { getPatentResult } from "./openAiAction";
+
+import type { PatentResponseType } from "../(types)/patent";
 
 const mockCompanies = MockCompanyAndProducts.companies.map((c) => c.name);
 const mockPatentIds = MockPatents.map((p) => p.publication_number);
@@ -19,71 +25,61 @@ const patentIdFuseOptions = {
   threshold: FUSSY_SEARCH_THRESHOLD,
 };
 
-const _getProductPrompt = (companyName: string): string | null => {
+const _getCompanyName = (rawCompanyName: string) => {
   const companyFuse = new Fuse(mockCompanies, companyFuseOptions);
+  const { item: companyName } = companyFuse.search(rawCompanyName)[0];
 
-  try {
-    const { item: targetCompanyName } = companyFuse.search(companyName)[0];
-    const targetCompany = MockCompanyAndProducts.companies.find(
-      (company) => company.name === targetCompanyName
-    );
+  return companyName;
+};
 
-    if (targetCompany) {
-      const productsPrompt = targetCompany.products
-        .map(
-          (product, index) =>
-            `${index + 1} Product Name: ${product.name}\n  Description: ${
-              product.description
-            }`
-        )
-        .join("\n\n");
+const _getProductPrompt = (companyName: string): string => {
+  const targetCompany = MockCompanyAndProducts.companies.find(
+    (company) => company.name === companyName
+  );
 
-      return productsPrompt;
-    }
-  } catch (error) {
-    console.error(error);
+  if (targetCompany) {
+    const productsPrompt = targetCompany.products
+      .map(
+        (product, index) =>
+          `${index + 1} Product Name: ${product.name}\n  Description: ${
+            product.description
+          }`
+      )
+      .join("\n\n");
+
+    return productsPrompt;
+  } else {
+    throw new Error("Invalid Company Name");
   }
+};
 
-  return null;
+const _getPatentId = (rawPatentId: string) => {
+  const patentIdFuse = new Fuse(mockPatentIds, patentIdFuseOptions);
+  const { item: patentId } = patentIdFuse.search(rawPatentId)[0];
+
+  return patentId;
 };
 
 const _getClaim = (
   patentId: string
-): { text: string; num: string }[] | null => {
-  const patentIdFuse = new Fuse(mockPatentIds, patentIdFuseOptions);
+): { text: string; num: string }[] | undefined => {
+  const targetPatent = MockPatents.find(
+    (patent) => patent.publication_number === patentId
+  );
 
-  try {
-    const { item: targetPatentId } = patentIdFuse.search(patentId)[0];
-    const targetPatent = MockPatents.find(
-      (patent) => patent.publication_number === targetPatentId
-    );
+  if (targetPatent) {
+    const claim = JSON.parse(targetPatent.claims);
 
-    if (targetPatent) {
-      const claim = JSON.parse(targetPatent.claims);
-
-      return claim;
-    }
-  } catch (error) {
-    console.error(error);
+    return claim;
   }
-
-  return null;
 };
 
-const _getClaimPrompt = (
-  claims: { num: string; text: string }[]
-): string | null => {
-  try {
-    const claimPrompt = claims
-      .map((claim: { text: string }) => claim.text)
-      .join(" ");
+const _getClaimPrompt = (claims: { num: string; text: string }[]): string => {
+  const claimPrompt = claims
+    .map((claim: { text: string }) => claim.text)
+    .join(" ");
 
-    return claimPrompt;
-  } catch (error) {
-    console.error(error);
-  }
-
-  return null;
+  return claimPrompt;
 };
 
 const _getDetailClaims = (
@@ -98,15 +94,38 @@ const _getDetailClaims = (
     if (detail) {
       return detail.text;
     } else {
-      return '"No specific claims identified"';
+      return "No specific claims identified";
     }
   });
 
   return detailClaims;
 };
 
-export const getResult = async (patentId: string, companyName: string) => {
+const _getResViewModel = (
+  res: PatentResponseType,
+  claims: {
+    text: string;
+    num: string;
+  }[]
+) => {
+  const { topInfringingProducts } = res;
+  const resViewModel = topInfringingProducts.map((res) => ({
+    name: res.productName,
+    reason: res.infringementExplanation,
+    claimsAtIssue: _getDetailClaims(claims, res.claimsAtIssue),
+  }));
+
+  return resViewModel;
+};
+
+export const getResult = async (
+  rawPatentId: string,
+  rawCompanyName: string
+) => {
+  const companyName = _getCompanyName(rawCompanyName);
   const productsPrompt = _getProductPrompt(companyName);
+
+  const patentId = _getPatentId(rawPatentId);
   const claims = _getClaim(patentId);
   let claimPrompt = null;
 
@@ -116,6 +135,12 @@ export const getResult = async (patentId: string, companyName: string) => {
     throw new Error("Invalid Patent ID");
   }
 
+  const cachedResult = await getCachedPatentResult(patentId, companyName);
+
+  if (cachedResult) {
+    return _getResViewModel(cachedResult, claims);
+  }
+
   try {
     if (
       productsPrompt &&
@@ -123,15 +148,14 @@ export const getResult = async (patentId: string, companyName: string) => {
       claimPrompt &&
       claimPrompt.length > 0
     ) {
+      console.log("Start LLM Completion");
+
       const res = await getPatentResult(productsPrompt, claimPrompt);
 
       if (res) {
-        const { topInfringingProducts } = res;
-        const resViewModel = topInfringingProducts.map((res) => ({
-          name: res.productName,
-          reason: res.infringementExplanation,
-          claimsAtIssue: _getDetailClaims(claims, res.claimsAtIssue),
-        }));
+        setCachedPatentResult(patentId, companyName, res);
+
+        const resViewModel = _getResViewModel(res, claims);
 
         return resViewModel;
       } else {
@@ -142,5 +166,7 @@ export const getResult = async (patentId: string, companyName: string) => {
     }
   } catch (error) {
     console.error(error);
+
+    throw error;
   }
 };
