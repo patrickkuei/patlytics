@@ -17,11 +17,9 @@ const mockPatentIds = MockPatents.map((p) => p.publication_number);
 const FUSSY_SEARCH_THRESHOLD = 0.3;
 
 const companyFuseOptions = {
-  keys: ["name"],
   threshold: FUSSY_SEARCH_THRESHOLD,
 };
 const patentIdFuseOptions = {
-  keys: [],
   threshold: FUSSY_SEARCH_THRESHOLD,
 };
 
