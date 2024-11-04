@@ -1,7 +1,8 @@
 "use client";
-import { useLayoutEffect, useState } from "react";
 
+import { useLayoutEffect, useState } from "react";
 import Loader from "../(components)/Loader";
+
 import type { PatentCheckResult } from "../(types)/patent";
 
 const ProductItem = ({
@@ -74,7 +75,7 @@ const SavedResultItem = ({
   );
 };
 
-const page = () => {
+const Saved = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [savedResults, setSavedResults] = useState<PatentCheckResult[]>([]);
   const [deleteStatus, setDeleteStatus] = useState<
@@ -131,4 +132,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Saved;

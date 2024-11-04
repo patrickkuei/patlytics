@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 
 interface SearchBarProps {
@@ -39,8 +41,7 @@ const SearchBar = ({ onSearch, isLoading }: SearchBarProps) => {
       />
       <input
         type="text"
-        placeholder="Company Name
-"
+        placeholder="Company Name"
         value={companyName}
         onChange={(e) => setCompanyName(e.target.value)}
         className="bg-secondary p-2 rounded text-text w-full mb-2"
