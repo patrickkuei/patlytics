@@ -1,5 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai";
+"use server";
+
 import { PromptTemplate } from "@langchain/core/prompts";
+import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
 const model = new ChatOpenAI({
